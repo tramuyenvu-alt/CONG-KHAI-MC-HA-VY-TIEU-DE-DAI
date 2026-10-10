@@ -1,7 +1,32 @@
 name: run-private-code
 
-
-  workflow_dispatch: {}
+on:
+  workflow_dispatch:
+    inputs:
+      private_repo:
+        description: "Repository riêng chứa pipeline"
+        required: false
+        default: "tramuyenvu-alt/MC-HA-VY-TIEU-DE-DAI"
+        type: string
+      private_ref:
+        description: "Nhánh hoặc ref của repository riêng"
+        required: false
+        default: "main"
+        type: string
+      workdir:
+        description: "Thư mục chứa scripts/generate_thumbnails.py (mặc định: .)"
+        required: false
+        default: "."
+        type: string
+      youtube_privacy:
+        description: "Chế độ hiển thị video YouTube"
+        required: false
+        default: "public"
+        type: choice
+        options:
+          - public
+          - unlisted
+          - private
 
 jobs:
   run-private:
@@ -29,6 +54,9 @@ jobs:
       CF_API_TOKEN:  ${{ secrets.CF_API_TOKEN }}
       CF_MODEL: "@cf/black-forest-labs/flux-1-schnell"
       CF_STEPS: "8"
+      CF_MAX_ATTEMPTS: "3"
+      IMG_PROVIDER_FALLBACK: ""
+      ALLOW_PLACEHOLDER: "0"
 
     steps:
       - name: Checkout wrapper (repo PUBLIC)
