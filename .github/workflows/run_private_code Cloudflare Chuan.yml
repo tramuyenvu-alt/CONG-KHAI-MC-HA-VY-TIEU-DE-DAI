@@ -2,31 +2,6 @@ name: run-private-code
 
 on:
   workflow_dispatch:
-    inputs:
-      private_repo:
-        description: "Repository riêng chứa pipeline"
-        required: false
-        default: "tramuyenvu-alt/MC-HA-VY-TIEU-DE-DAI"
-        type: string
-      private_ref:
-        description: "Nhánh hoặc ref của repository riêng"
-        required: false
-        default: "main"
-        type: string
-      workdir:
-        description: "Thư mục chứa scripts/generate_thumbnails.py (mặc định: .)"
-        required: false
-        default: "."
-        type: string
-      youtube_privacy:
-        description: "Chế độ hiển thị video YouTube"
-        required: false
-        default: "public"
-        type: choice
-        options:
-          - public
-          - unlisted
-          - private
 
 jobs:
   run-private:
@@ -42,6 +17,9 @@ jobs:
       YT_CLIENT_ID:     ${{ secrets.YT_CLIENT_ID }}
       YT_CLIENT_SECRET: ${{ secrets.YT_CLIENT_SECRET }}
       YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
+      YOUTUBE_PRIVACY: "public"
+      YOUTUBE_PRIVACY: "public"
+      YOUTUBE_PRIVACY: "public"
 
       # chọn thumb tiêu đề bắt đầu
       SEQ_BASE_RUN: "1"
@@ -79,25 +57,13 @@ jobs:
             echo "mode=none" >> "$GITHUB_OUTPUT"
           fi
 
-      # support chạy không truyền inputs
-      - name: Resolve parameters (support schedule without inputs)
-        id: params
-        run: |
-          repo="${{ inputs.private_repo }}"; [ -z "$repo" ] && repo="tramuyenvu-alt/MC-HA-VY-TIEU-DE-DAI"; echo "repo=$repo" >> "$GITHUB_OUTPUT"
-          ref="${{ inputs.private_ref }}";   [ -z "$ref" ] && ref="main";                   echo "ref=$ref" >> "$GITHUB_OUTPUT"
-          wd="${{ inputs.workdir }}";        [ -z "$wd" ]  && wd=".";                       echo "workdir=$wd" >> "$GITHUB_OUTPUT"
-          privacy="${{ inputs.youtube_privacy }}"; [ -z "$privacy" ] && privacy="public";   echo "privacy=$privacy" >> "$GITHUB_OUTPUT"
-
-      - name: Export resolved privacy to env
-        run: echo "YOUTUBE_PRIVACY=${{ steps.params.outputs.privacy }}" >> "$GITHUB_ENV"
-
       # Kéo code từ repo PRIVATE (PAT)
       - name: Checkout PRIVATE via PAT
         if: ${{ steps.auth.outputs.mode == 'pat' }}
         uses: actions/checkout@v4
         with:
-          repository: ${{ steps.params.outputs.repo }}
-          ref: ${{ steps.params.outputs.ref }}
+          repository: tramuyenvu-alt/MC-HA-VY-TIEU-DE-DAI
+          ref: main
           path: private-src
           fetch-depth: 1
           token: ${{ secrets.PRIVATE_REPO_TOKEN }}
@@ -108,8 +74,8 @@ jobs:
         if: ${{ steps.auth.outputs.mode == 'ssh' }}
         uses: actions/checkout@v4
         with:
-          repository: ${{ steps.params.outputs.repo }}
-          ref: ${{ steps.params.outputs.ref }}
+          repository: tramuyenvu-alt/MC-HA-VY-TIEU-DE-DAI
+          ref: main
           path: private-src
           fetch-depth: 1
           ssh-key: ${{ secrets.PRIVATE_SSH_KEY }}
@@ -134,7 +100,7 @@ jobs:
         run: |
           set -e
           BASE="private-src"
-          DEFAULT="${{ steps.params.outputs.workdir }}"
+          DEFAULT="."
           CAND=""
           if [ -n "$DEFAULT" ] && [ -f "$BASE/$DEFAULT/scripts/generate_thumbnails.py" ]; then
             CAND="$BASE/$DEFAULT"
@@ -235,8 +201,8 @@ jobs:
         env:
           PUSH_TOKEN_1: ${{ secrets.PRIVATE_REPO_PUSH_TOKEN }}
           PUSH_TOKEN_2: ${{ secrets.PRIVATE_REPO_TOKEN }}
-          PRIVATE_REPO: ${{ steps.params.outputs.repo }}
-          PRIVATE_REF: ${{ steps.params.outputs.ref }}
+          PRIVATE_REPO: tramuyenvu-alt/MC-HA-VY-TIEU-DE-DAI
+          PRIVATE_REF: main
           DIR_FOUND: ${{ steps.find_script.outputs.dir }}
         run: |
           set -euo pipefail
@@ -283,8 +249,8 @@ jobs:
         working-directory: private-src
         env:
           PRIVATE_SSH_KEY: ${{ secrets.PRIVATE_SSH_KEY }}
-          PRIVATE_REPO: ${{ steps.params.outputs.repo }}
-          PRIVATE_REF: ${{ steps.params.outputs.ref }}
+          PRIVATE_REPO: tramuyenvu-alt/MC-HA-VY-TIEU-DE-DAI
+          PRIVATE_REF: main
           DIR_FOUND: ${{ steps.find_script.outputs.dir }}
         run: |
           set -euo pipefail
